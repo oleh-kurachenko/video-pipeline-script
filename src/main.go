@@ -25,15 +25,11 @@ func main() {
 		printUsage(os.Stderr)
 		os.Exit(sysexits.EX_USAGE)
 	}
-	if slices.Contains([]string{"help", "--help", "-h", "-?", "usage"},
-		args[0]) {
+	if slices.Contains([]string{
+		"help", "--help", "-h", "-?", "usage"}, args[0]) {
 
 		printUsage(os.Stdout)
 		os.Exit(sysexits.EX_OK)
-	}
-	if len(args) == 1 {
-		printUsage(os.Stderr)
-		os.Exit(sysexits.EX_USAGE)
 	}
 
 	switch args[0] {
@@ -42,9 +38,15 @@ func main() {
 			args[0])
 		os.Exit(sysexits.EX_UNAVAILABLE)
 	case "decode":
-		_, _ = fmt.Fprintf(os.Stderr, "not yet supported command: %s\n",
-			args[0])
-		os.Exit(sysexits.EX_UNAVAILABLE)
+		err := decode(args[1:])
+		if _, ok := err.(*decodingError); ok {
+			_, _ = fmt.Fprintf(os.Stderr, "invalid args: %s\n", err)
+			os.Exit(sysexits.EX_USAGE)
+		}
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "unexpected error: %v\n", err)
+			os.Exit(sysexits.EX_SOFTWARE)
+		}
 	default:
 		_, _ = fmt.Fprintf(os.Stderr, "unknown command: %s\n", args[0])
 		printUsage(os.Stderr)
