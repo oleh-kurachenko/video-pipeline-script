@@ -1,35 +1,37 @@
-package main
+package decode
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"video-pipeline-script/common"
 )
 
-type decodingError struct {
+type DecodingError struct {
 	message string
 }
 
-func (e *decodingError) Error() string {
+func (e *DecodingError) Error() string {
 	return e.message
 }
 
 var inputFilenamePattern = regexp.MustCompile(`^\d+\.mp4$`)
 
 func makeTranscodingTasks(dirs []string,
-	outputPrefix string) (tasks []transcodingTask,
+	outputPrefix string) (tasks []common.TranscodingTask,
 	err error) {
 	for _, dir := range dirs {
 		fileInfo, err := os.Stat(dir)
 
 		if os.IsNotExist(err) {
 			return nil,
-				&decodingError{fmt.Sprintf("%s does not exist", dir)}
+				&DecodingError{fmt.Sprintf("%s does not exist", dir)}
 		}
 		if !fileInfo.Mode().IsDir() {
 			return nil,
-				&decodingError{fmt.Sprintf("%s is not a directory", dir)}
+				&DecodingError{fmt.Sprintf("%s is not a directory", dir)}
 		}
 		if err != nil {
 			return nil, err
@@ -37,7 +39,7 @@ func makeTranscodingTasks(dirs []string,
 
 		files, err := os.ReadDir(dir)
 		if err != nil {
-			return nil, &decodingError{fmt.Sprintf(
+			return nil, &DecodingError{fmt.Sprintf(
 				"directory %s could not be read: %s", dir, err.Error())}
 		}
 
@@ -46,10 +48,10 @@ func makeTranscodingTasks(dirs []string,
 				continue
 			}
 
-			task := transcodingTask{
-				inputFilename:  filepath.Join(dir, file.Name()),
-				outputFilename: filepath.Join(dir, outputPrefix+file.Name()),
-				options:        []string{},
+			task := common.TranscodingTask{
+				InputFilename:  filepath.Join(dir, file.Name()),
+				OutputFilename: filepath.Join(dir, outputPrefix+file.Name()),
+				Options:        []string{},
 			}
 			tasks = append(tasks, task)
 		}
@@ -58,7 +60,7 @@ func makeTranscodingTasks(dirs []string,
 	return tasks, nil
 }
 
-func decode(args []string) error {
+func Decode(args []string) error {
 	_, err := makeTranscodingTasks(args, "dnxhd_")
 	if err != nil {
 		return err

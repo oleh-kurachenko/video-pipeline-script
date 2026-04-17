@@ -8,6 +8,8 @@ import (
 
 	"github.com/MatthiasPetermann/sysexits"
 	"github.com/fatih/color"
+
+	"video-pipeline-script/decode"
 )
 
 func printUsage(writeTo io.Writer) {
@@ -38,8 +40,8 @@ func main() {
 			args[0])
 		os.Exit(sysexits.EX_UNAVAILABLE)
 	case "decode":
-		err := decode(args[1:])
-		if _, ok := err.(*decodingError); ok {
+		err := decode.Decode(args[1:])
+		if _, ok := err.(*decode.DecodingError); ok {
 			_, _ = fmt.Fprintf(os.Stderr, "invalid args: %s\n", err)
 			os.Exit(sysexits.EX_USAGE)
 		}
