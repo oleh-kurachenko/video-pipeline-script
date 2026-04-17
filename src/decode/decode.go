@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"video-pipeline-script/common"
 )
@@ -44,13 +45,15 @@ func makeTranscodingTasks(dirs []string,
 		}
 
 		for _, file := range files {
-			if file.IsDir() || !inputFilenamePattern.MatchString(file.Name()) {
+			fileName := strings.ToLower(file.Name())
+
+			if file.IsDir() || !inputFilenamePattern.MatchString(fileName) {
 				continue
 			}
 
 			task := common.TranscodingTask{
 				InputFilename:  filepath.Join(dir, file.Name()),
-				OutputFilename: filepath.Join(dir, outputPrefix+file.Name()),
+				OutputFilename: filepath.Join(dir, outputPrefix+fileName),
 				Options:        []string{},
 			}
 			tasks = append(tasks, task)
