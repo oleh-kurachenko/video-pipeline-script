@@ -18,7 +18,7 @@ func (e *DecodingError) Error() string {
 	return e.message
 }
 
-var inputFilenamePattern = regexp.MustCompile(`^\d+\.mp4$`)
+var inputFilenamePattern = regexp.MustCompile(`^(\d+)\.mp4$`)
 
 func makeTranscodingTasks(dirs []string,
 	outputPrefix string) (tasks []common.TranscodingTask,
@@ -51,10 +51,12 @@ func makeTranscodingTasks(dirs []string,
 				continue
 			}
 
+			newFileName := outputPrefix + inputFilenamePattern.
+				ReplaceAllString(fileName, "$1.mov")
+
 			task := common.TranscodingTask{
 				InputFilename:  filepath.Join(dir, file.Name()),
-				OutputFilename: filepath.Join(dir, outputPrefix+fileName),
-				Options:        []string{},
+				OutputFilename: filepath.Join(dir, newFileName),
 			}
 			tasks = append(tasks, task)
 		}
@@ -64,10 +66,24 @@ func makeTranscodingTasks(dirs []string,
 }
 
 func Decode(args []string) error {
-	_, err := makeTranscodingTasks(args, "dnxhd_")
+	tasks, err := makeTranscodingTasks(args, "dnxhd_")
 	if err != nil {
 		return err
 	}
 
-	return nil
+	for i := range tasks {
+		tasks[i].InputOptions = map[string]string{
+			"loglevel": "warning",
+			"hwaccel":  "cuda",
+		}
+		tasks[i].OutputOptions = map[string]string{
+			"loglevel":  "warning",
+			"c:v":       "dnxhd",
+			"profile:v": "dnxhr_hqx",
+			"pix_fmt":   "yuv422p10le",
+			"c:a":       "pcm_s16le",
+		}
+	}
+
+	return common.TranscodeTasks(tasks)
 }
